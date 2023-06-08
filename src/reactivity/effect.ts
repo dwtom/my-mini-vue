@@ -7,7 +7,7 @@ class ReactiveEffect {
 
   run() {
     activeEffect = this;
-    this._fn();
+    return this._fn();
   }
 }
 
@@ -43,4 +43,5 @@ export function trigger(target: object, key: string | symbol) {
 export function effect(fn: Function) {
   const effectItem = new ReactiveEffect(fn);
   effectItem.run();
+  return effectItem.run.bind(effectItem);
 }
