@@ -1,7 +1,8 @@
 let activeEffect;
 class ReactiveEffect {
   private _fn: Function;
-  constructor(fn: Function) {
+  // scheduler 可以直接获取到
+  constructor(fn: Function, public scheduler?) {
     this._fn = fn;
   }
 
@@ -36,12 +37,16 @@ export function trigger(target: object, key: string | symbol) {
   const depsMap = targetMap.get(target);
   const dep = depsMap.get(key);
   for (const effectItem of dep) {
-    effectItem.run();
+    if (effectItem.scheduler) {
+      effectItem.scheduler();
+    } else {
+      effectItem.run();
+    }
   }
 }
 
-export function effect(fn: Function) {
-  const effectItem = new ReactiveEffect(fn);
+export function effect(fn: Function, options: any = {}) {
+  const effectItem = new ReactiveEffect(fn, options.scheduler);
   effectItem.run();
   return effectItem.run.bind(effectItem);
 }
