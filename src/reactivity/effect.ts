@@ -1,14 +1,30 @@
+import { extend } from "../utils";
+
 let activeEffect;
 class ReactiveEffect {
   private _fn: Function;
-  // scheduler 可以直接获取到
+  deps = []; // 反向收集effect实例
+  isClean = false; // 是否已经清空
+  onStop?: () => void;
+  // scheduler 可以从外部直接获取到
   constructor(fn: Function, public scheduler?) {
     this._fn = fn;
+    this.scheduler = scheduler;
   }
 
   run() {
     activeEffect = this;
     return this._fn();
+  }
+  stop() {
+    if (!this.isClean) {
+      cleanUpEffect(this);
+      if (this.onStop) {
+        this.onStop()
+      }
+      this.isClean = true
+    }
+    
   }
 }
 
@@ -29,7 +45,11 @@ export function track(target: object, key: string | symbol) {
     dep = new Set();
     depsMap.set(key, dep);
   }
+  if (!activeEffect) {
+    return;
+  }
   dep.add(activeEffect);
+  activeEffect.deps.push(dep);
 }
 
 // 触发依赖
@@ -47,6 +67,19 @@ export function trigger(target: object, key: string | symbol) {
 
 export function effect(fn: Function, options: any = {}) {
   const effectItem = new ReactiveEffect(fn, options.scheduler);
+  extend(effectItem, options); // 把options的属性挂到effct实例上
   effectItem.run();
-  return effectItem.run.bind(effectItem);
+  const runner: any = effectItem.run.bind(effectItem);
+  runner.effect = effectItem; // 挂载到runner上
+  return runner;
+}
+
+export function stop(runner) {
+  runner.effect.stop();
+}
+
+function cleanUpEffect(effect: ReactiveEffect) {
+  effect.deps.forEach((dep: any) => {
+    dep.delete(effect);
+  });
 }

@@ -1,4 +1,4 @@
-import { effect } from '../effect';
+import { effect, stop } from '../effect';
 import { reactive } from '../reactive';
 
 describe('effect', () => {
@@ -59,4 +59,41 @@ it('scheduler', () => {
   expect(scheduler).toHaveBeenCalledTimes(1);
   run();
   expect(dummy).toBe(2);
+});
+
+// 实现stop方法
+it('stop', () => {
+  const obj = reactive({
+    prop: 1,
+  });
+  let dummy;
+  const runner = effect(() => {
+    dummy = obj.prop;
+  });
+  obj.prop = 2;
+  expect(dummy).toBe(2);
+  stop(runner);
+  obj.prop = 3;
+  // 调用了stop方法后不会触发响应式更新
+  expect(dummy).toBe(2);
+
+  runner();
+  expect(dummy).toBe(3);
+});
+
+// 调用了stop后，onStop会执行
+it('onStop', () => {
+  const obj = reactive({
+    foo: 1,
+  });
+  const onStop = jest.fn();
+  let dummy;
+  const runner = effect(
+    () => {
+      dummy = obj.foo;
+    },
+    { onStop }
+  );
+  stop(runner);
+  expect(onStop).toBeCalledTimes(1);
 });
