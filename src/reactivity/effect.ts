@@ -24,7 +24,6 @@ class ReactiveEffect {
       }
       this.isClean = true
     }
-    
   }
 }
 
@@ -69,6 +68,7 @@ export function effect(fn: Function, options: any = {}) {
   const effectItem = new ReactiveEffect(fn, options.scheduler);
   extend(effectItem, options); // 把options的属性挂到effct实例上
   effectItem.run();
+  // 返回run方法，并将effect实例作为this绑定
   const runner: any = effectItem.run.bind(effectItem);
   runner.effect = effectItem; // 挂载到runner上
   return runner;
