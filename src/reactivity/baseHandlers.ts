@@ -3,14 +3,22 @@
  * @Author: Dong Wei
  * @Date: 2023-06-26 22:16:35
  * @LastEditors: Dong Wei
- * @LastEditTime: 2023-06-26 22:28:20
+ * @LastEditTime: 2023-06-27 22:29:34
  * @FilePath: \my-mini-vue\src\reactivity\baseHandlers.ts
  */
 import { track, trigger } from './effect';
+import { ReactiveFlags } from './reactive';
 
 function createGetter(isReadonly = false) {
   return function get(target, key) {
     const res = Reflect.get(target, key);
+    if (key === ReactiveFlags.IS_REACTIVE) {
+      // 触发isReactive方法
+      return !isReadonly;
+    } else if (key === ReactiveFlags.IS_READONLY) {
+      // 触发isReadonly方法
+      return isReadonly;
+    }
     if (!isReadonly) {
       track(target, key);
     }
