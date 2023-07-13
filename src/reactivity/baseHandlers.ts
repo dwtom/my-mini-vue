@@ -3,11 +3,12 @@
  * @Author: Dong Wei
  * @Date: 2023-06-26 22:16:35
  * @LastEditors: Dong Wei
- * @LastEditTime: 2023-06-27 22:29:34
+ * @LastEditTime: 2023-07-13 16:45:06
  * @FilePath: \my-mini-vue\src\reactivity\baseHandlers.ts
  */
+import { isObject } from '../utils';
 import { track, trigger } from './effect';
-import { ReactiveFlags } from './reactive';
+import { ReactiveFlags, reactive, readonly } from './reactive';
 
 function createGetter(isReadonly = false) {
   return function get(target, key) {
@@ -18,6 +19,10 @@ function createGetter(isReadonly = false) {
     } else if (key === ReactiveFlags.IS_READONLY) {
       // 触发isReadonly方法
       return isReadonly;
+    }
+    // 如果是嵌套对象则继续包装
+    if (isObject(res)) {
+      return isReadonly ? readonly(res) : reactive(res);
     }
     if (!isReadonly) {
       track(target, key);
