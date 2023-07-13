@@ -1,4 +1,8 @@
-import { mutableHandlers, readonlyHandlers } from './baseHandlers';
+import {
+  mutableHandlers,
+  readonlyHandlers,
+  shallowReadonlyHandlers,
+} from './baseHandlers';
 
 function createActiveObj(obj: any, handlers) {
   return new Proxy(obj, handlers);
@@ -16,6 +20,10 @@ export const reactive = (obj) => {
 // 使包装过的值不被更改
 export const readonly = (obj) => {
   return createActiveObj(obj, readonlyHandlers);
+}
+
+export const shallowReadonly = (obj) => {
+  return createActiveObj(obj, shallowReadonlyHandlers);
 }
 
 export const isReactive = (value) => {

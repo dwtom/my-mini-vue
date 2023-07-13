@@ -3,14 +3,14 @@
  * @Author: Dong Wei
  * @Date: 2023-06-26 22:16:35
  * @LastEditors: Dong Wei
- * @LastEditTime: 2023-07-13 16:45:06
+ * @LastEditTime: 2023-07-13 17:06:26
  * @FilePath: \my-mini-vue\src\reactivity\baseHandlers.ts
  */
-import { isObject } from '../utils';
+import { isObject, extend } from '../utils';
 import { track, trigger } from './effect';
 import { ReactiveFlags, reactive, readonly } from './reactive';
 
-function createGetter(isReadonly = false) {
+function createGetter(isReadonly = false, shallow = false) {
   return function get(target, key) {
     const res = Reflect.get(target, key);
     if (key === ReactiveFlags.IS_REACTIVE) {
@@ -19,6 +19,10 @@ function createGetter(isReadonly = false) {
     } else if (key === ReactiveFlags.IS_READONLY) {
       // 触发isReadonly方法
       return isReadonly;
+    }
+    // 如果是shallow则直接返回
+    if (shallow) {
+      return res;
     }
     // 如果是嵌套对象则继续包装
     if (isObject(res)) {
@@ -42,6 +46,7 @@ function createSetter() {
 const get = createGetter();
 const set = createSetter();
 const readonlyGet = createGetter(true);
+const shallowReadonlyGet = createGetter(true, true);
 
 export const mutableHandlers = {
   get,
@@ -55,3 +60,7 @@ export const readonlyHandlers = {
     return true;
   },
 };
+
+export const shallowReadonlyHandlers = extend({}, readonlyHandlers, {
+  get: shallowReadonlyGet,
+});
