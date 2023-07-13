@@ -13,25 +13,30 @@ export const enum ReactiveFlags {
   IS_READONLY = '__v_isReadonly',
 }
 
-export const reactive = (obj) => {
+export const reactive = obj => {
   return createActiveObj(obj, mutableHandlers);
 };
 
 // 使包装过的值不被更改
-export const readonly = (obj) => {
+export const readonly = obj => {
   return createActiveObj(obj, readonlyHandlers);
-}
+};
 
-export const shallowReadonly = (obj) => {
+export const shallowReadonly = obj => {
   return createActiveObj(obj, shallowReadonlyHandlers);
-}
+};
 
-export const isReactive = (value) => {
+export const isReactive = value => {
   // 是reactive对象时触发get
   // 不是reactive对象时返回undefined
   return Boolean(value[ReactiveFlags.IS_REACTIVE]);
-}
+};
 
-export const isReadonly = (value) => {
+export const isReadonly = value => {
   return Boolean(value[ReactiveFlags.IS_READONLY]);
-}
+};
+
+// 是否是proxy对象
+export const isProxy = value => {
+  return isReactive(value) || isReadonly(value);
+};
