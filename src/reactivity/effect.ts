@@ -2,7 +2,7 @@ import { extend } from '../utils';
 
 let activeEffect;
 let shouldTrack; // 是否应该收集依赖调用stop后不应收集
-class ReactiveEffect {
+export class ReactiveEffect {
   private _fn: Function;
   deps = []; // 反向收集effect实例
   isStopped = false; // 是否已清空响应式收集(调用过stop方法)
