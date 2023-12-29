@@ -2,18 +2,21 @@ let activeEffect; // effect实例
 const targetMap = new Map(); // 存储依赖的最外层的map
 class ReactiveEffect {
   private _fn: any;
-  constructor(fn) {
+  public scheduler: Function | undefined;
+  constructor(fn, scheduler?) {
     this._fn = fn;
+    this.scheduler = scheduler;
   }
   run() {
     activeEffect = this;
-    this._fn();
+    return this._fn();
   }
 }
 
-export function effect(fn) {
-  const _effect = new ReactiveEffect(fn);
+export function effect(fn, options: any = {}) {
+  const _effect = new ReactiveEffect(fn, options.scheduler);
   _effect.run();
+  return _effect.run.bind(_effect);
 }
 
 // 收集依赖
@@ -41,6 +44,10 @@ export function trigger(target, key) {
   const depsMap = targetMap.get(target);
   let dep = depsMap.get(key);
   for (const effect of dep) {
-    effect.run();
+    if (effect.scheduler) {
+      effect.scheduler();
+    } else {
+      effect.run();
+    }
   }
 }
