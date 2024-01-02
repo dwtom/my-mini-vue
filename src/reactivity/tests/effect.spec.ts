@@ -1,5 +1,5 @@
 import { reactive } from '../reactive';
-import { effect } from '../effect';
+import { effect, stop } from '../effect';
 describe('effect', () => {
   it('happy path', () => {
     const user = reactive({
@@ -56,5 +56,41 @@ describe('effect', () => {
     expect(dummy).toBe(1);
     run();
     expect(dummy).toBe(2);
+  });
+
+  // 调用stop方法后不再触发响应性，除非再次调用runner
+  it('stop', () => {
+    let dummy;
+    const obj = reactive({ prop: 1 });
+    const runner = effect(() => {
+      dummy = obj.prop;
+    });
+    obj.prop = 2;
+    expect(dummy).toBe(2);
+    stop(runner);
+    obj.prop = 3;
+    expect(dummy).toBe(2);
+    runner();
+    expect(dummy).toBe(3);
+    stop(runner);
+    obj.prop = 4;
+    expect(dummy).toBe(3); // 4
+  });
+
+  // 调用stop之后会执行onStop回调
+  it('onStop', () => {
+    const obj = reactive({ foo: 1 });
+    const onStop = jest.fn();
+    let dummy;
+    const runner = effect(
+      () => {
+        dummy = obj.foo;
+      },
+      {
+        onStop,
+      }
+    );
+    stop(runner);
+    expect(onStop).toBeCalledTimes(1);
   });
 });
