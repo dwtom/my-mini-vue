@@ -1,11 +1,12 @@
 import { extend } from '../shared';
 
 let activeEffect; // effect实例
+let shouldTrack = false; // 是否进行依赖收集
 const targetMap = new Map(); // 存储依赖的最外层的map
 class ReactiveEffect {
   private _fn: any;
   deps: Set<any>[] = []; // 收集所有的effect实例
-  active = true;
+  active = true; // 是否未调用stop方法
   public scheduler: Function | undefined;
   onStop?: () => void;
   constructor(fn, scheduler?) {
@@ -13,9 +14,15 @@ class ReactiveEffect {
     this.scheduler = scheduler;
   }
   run() {
+    if (!this.active) {
+      this.active = true; // 避免再次调用stop方法失效
+      return this._fn();
+    }
+    shouldTrack = true;
     activeEffect = this;
-    this.active = true; // 避免再次调用stop方法失效
-    return this._fn();
+    const result = this._fn();
+    shouldTrack = false;
+    return result;
   }
   stop() {
     if (this.active) {
@@ -30,6 +37,7 @@ class ReactiveEffect {
 
 function cleanupDeps(effect) {
   effect.deps.forEach((dep: any) => dep.delete(effect));
+  effect.deps.length = 0; // 清空保存Set数组的deps
 }
 
 export function effect(fn, options: any = {}) {
@@ -47,8 +55,16 @@ export function stop(runner) {
   runner.effect.stop();
 }
 
+// 是否收集依赖
+function isTracking() {
+  return shouldTrack && activeEffect !== undefined;
+}
+
 // 收集依赖
 export function track(target, key) {
+  if (!isTracking()) {
+    return;
+  }
   // 触发依赖是触发fn事件，所以收集依赖其实是收集effect和fn，然后和传入的target对象的key绑定
   // target->key->effect.fn
   // targetMap:[[target, 中间层Map]]
@@ -63,9 +79,6 @@ export function track(target, key) {
   if (!dep) {
     dep = new Set();
     depsMap.set(key, dep);
-  }
-  if (!activeEffect) {
-    return;
   }
   dep.add(activeEffect);
   activeEffect.deps.push(dep);
