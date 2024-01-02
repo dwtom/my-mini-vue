@@ -1,4 +1,4 @@
-import { extend } from '../utils';
+import { extend } from '../shared';
 
 let activeEffect; // effect实例
 const targetMap = new Map(); // 存储依赖的最外层的map

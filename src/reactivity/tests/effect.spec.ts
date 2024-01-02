@@ -74,7 +74,7 @@ describe('effect', () => {
     expect(dummy).toBe(3);
     stop(runner);
     obj.prop = 4;
-    expect(dummy).toBe(3); // 4
+    expect(dummy).toBe(3);
   });
 
   // 调用stop之后会执行onStop回调
