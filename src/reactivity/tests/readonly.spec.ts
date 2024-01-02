@@ -1,4 +1,4 @@
-import { readonly } from '../reactive';
+import { isReadonly, readonly } from '../reactive';
 
 describe('readonly', () => {
   it('happy path', () => {
@@ -6,6 +6,8 @@ describe('readonly', () => {
     const warpped: any = readonly(original);
     expect(warpped).not.toBe(original);
     expect(warpped.foo).toBe(1);
+    expect(isReadonly(warpped)).toBe(true);
+    expect(isReadonly(original)).toBe(false);
   });
 
   it('should call console.warn when set', () => {
