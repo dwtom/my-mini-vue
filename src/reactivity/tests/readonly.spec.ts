@@ -1,4 +1,4 @@
-import { isReadonly, readonly } from '../reactive';
+import { isProxy, isReadonly, readonly } from '../reactive';
 
 describe('readonly', () => {
   it('nested values should also readonly', () => {
@@ -11,6 +11,9 @@ describe('readonly', () => {
 
     expect(isReadonly(warpped.bar)).toBe(true);
     expect(isReadonly(original.bar)).toBe(false);
+
+    // readonly包裹的对象是proxy
+    expect(isProxy(warpped)).toBe(true);
   });
 
   it('should call console.warn when set', () => {
