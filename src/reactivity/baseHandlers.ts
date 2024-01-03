@@ -1,4 +1,4 @@
-import { isObject } from '../shared';
+import { extend, isObject } from '../shared';
 import { track, trigger } from './effect';
 import { ReactiveFlags, reactive, readonly } from './reactive';
 
@@ -6,9 +6,10 @@ type ProxyKey = string | symbol;
 
 const get = createGetter();
 const set = createSetter();
-const readonlyGet = createGetter(true);
+const readonlyGet = createGetter({ isReadonly: true });
+const shallowReadonlyGet = createGetter({ shallow: true, isReadonly: true });
 
-function createGetter(isReadonly = false) {
+function createGetter({ isReadonly = false, shallow = false } = {}) {
   return function get(target: any, key: ProxyKey) {
     if (key === ReactiveFlags.IS_REACTIVE) {
       return !isReadonly;
@@ -16,6 +17,10 @@ function createGetter(isReadonly = false) {
       return isReadonly;
     }
     const res = Reflect.get(target, key);
+
+    if (shallow) {
+      return res;
+    }
 
     // 多层对象需要继续包裹实现响应性
     if (isObject(res)) {
@@ -52,3 +57,7 @@ export const readonlyHandlers = {
     return true;
   },
 };
+
+export const shallowReadonlyHandlers = extend({}, readonlyHandlers, {
+  get: shallowReadonlyGet,
+});
