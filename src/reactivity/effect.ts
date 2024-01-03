@@ -56,7 +56,7 @@ export function stop(runner) {
 }
 
 // 是否收集依赖
-function isTracking() {
+export function isTracking() {
   return shouldTrack && activeEffect !== undefined;
 }
 
@@ -81,6 +81,10 @@ export function track(target, key) {
     dep = new Set();
     depsMap.set(key, dep);
   }
+  trackEffects(dep);
+}
+
+export function trackEffects(dep) {
   // 如果已经收集过则不再重复收集
   if (dep.has(activeEffect)) {
     return;
@@ -93,6 +97,10 @@ export function track(target, key) {
 export function trigger(target, key) {
   const depsMap = targetMap.get(target);
   let dep = depsMap.get(key);
+  triggerEffects(dep);
+}
+
+export function triggerEffects(dep) {
   for (const effect of dep) {
     if (effect.scheduler) {
       effect.scheduler();
