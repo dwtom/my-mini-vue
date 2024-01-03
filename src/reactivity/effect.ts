@@ -3,7 +3,7 @@ import { extend } from '../shared';
 let activeEffect; // effect实例
 let shouldTrack = false; // 是否进行依赖收集
 const targetMap = new Map(); // 存储依赖的最外层的map
-class ReactiveEffect {
+export class ReactiveEffect {
   private _fn: any;
   deps: Set<any>[] = []; // 收集所有的effect实例
   active = true; // 是否未调用stop方法
