@@ -36,7 +36,7 @@ class ReactiveEffect {
 }
 
 function cleanupDeps(effect) {
-  effect.deps.forEach((dep: any) => dep.delete(effect));
+  effect.deps.forEach((dep: any) => dep.delete(effect)); // 仅删除Set内的值
   effect.deps.length = 0; // 清空保存Set数组的deps
 }
 
@@ -62,6 +62,7 @@ function isTracking() {
 
 // 收集依赖
 export function track(target, key) {
+  // 只有调用了run方法才能收集依赖
   if (!isTracking()) {
     return;
   }
@@ -79,6 +80,10 @@ export function track(target, key) {
   if (!dep) {
     dep = new Set();
     depsMap.set(key, dep);
+  }
+  // 如果已经收集过则不再重复收集
+  if (dep.has(activeEffect)) {
+    return;
   }
   dep.add(activeEffect);
   activeEffect.deps.push(dep);

@@ -68,7 +68,7 @@ describe('effect', () => {
     obj.prop = 2;
     expect(dummy).toBe(2);
     stop(runner);
-    obj.prop++;
+    obj.prop++; // 会先走get再走set,所以在track时需要判断
     expect(dummy).toBe(2);
     runner();
     expect(dummy).toBe(3);
