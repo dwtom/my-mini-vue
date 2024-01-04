@@ -57,7 +57,11 @@ function mountComponent(vnode, container) {
   setupComponent(instance);
   setupRenderEffect(instance, container);
 }
+
 function setupRenderEffect(instance: any, container: any) {
-  const subTree = instance.render(); // 虚拟节点树
+  const { proxy } = instance;
+  // 虚拟节点树，这里的render是组件的render函数 返回的内容是h函数返回的内容
+  // 绑定代理对象this 到组件内
+  const subTree = instance.render.call(proxy);
   patch(subTree, container);
 }
