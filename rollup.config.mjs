@@ -1,4 +1,5 @@
 import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser';
 
 export default {
   input: './src/index.ts',
@@ -14,5 +15,5 @@ export default {
       file: 'lib/my-mini-vue.cjs.js',
     },
   ],
-  plugins: [typescript()],
+  plugins: [typescript(), terser()],
 };
