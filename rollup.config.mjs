@@ -15,5 +15,8 @@ export default {
       file: 'lib/my-mini-vue.cjs.js',
     },
   ],
-  plugins: [typescript(), terser()],
+  plugins: [
+    typescript(),
+    // terser()
+  ],
 };
