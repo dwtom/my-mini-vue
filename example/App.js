@@ -1,7 +1,9 @@
 import { h } from '../lib/my-mini-vue.esm.js';
 
+window.self = null;
 export const App = {
   render() {
+    window.self = this;
     // ui
     return h('div', { id: 'root' }, `hi,${this.msg}`);
     // return h('div', { id: 'root' }, [

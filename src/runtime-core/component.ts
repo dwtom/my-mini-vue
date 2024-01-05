@@ -1,4 +1,5 @@
 import { isObject } from '../shared';
+import { PublicInstanceProxyHandlers } from './componentPublicInstance';
 
 // 生成组件实例
 export function createComponentInstance(vnode) {
@@ -10,6 +11,7 @@ export function createComponentInstance(vnode) {
   return component;
 }
 
+// 为组件实例赋予状态
 export function setupComponent(instance) {
   // 初始化props和slots
   // initProps()
@@ -23,20 +25,8 @@ export function setupComponent(instance) {
 function setupStatefulComponent(instance) {
   const Component = instance.type;
   // 组件的代理对象(this)
-  instance.proxy = new Proxy(
-    {},
-    {
-      get(target, key) {
-        // 将setup返回的值绑定到this
-        const { setupState } = instance;
-        // key是setup中定义的值
-        if (Object.hasOwn(setupState, key)) {
-          return setupState[key];
-        }
-        return Reflect.get(target, key);
-      },
-    }
-  );
+  // 将instance传入handlers
+  instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
 
   const { setup } = Component;
   if (setup) {

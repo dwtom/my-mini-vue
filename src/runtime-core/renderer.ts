@@ -22,7 +22,8 @@ function processElement(vnode, container) {
 
 function mountElement(vnode, container) {
   // vnode对象包含type,props,children 详见createVnode
-  const el = document.createElement(vnode.type);
+  // 将根节点绑定到当前的虚拟节点上便于后续绑定到this上调用
+  const el = (vnode.el = document.createElement(vnode.type));
   // 处理props
   for (const [key, val] of Object.entries(vnode.props ?? {})) {
     el.setAttribute(key, val);
@@ -51,17 +52,22 @@ function processComponent(vnode, container) {
   mountComponent(vnode, container);
 }
 
-function mountComponent(vnode, container) {
+function mountComponent(initialVNode, container) {
   // 创建组件实例
-  const instance = createComponentInstance(vnode);
+  const instance = createComponentInstance(initialVNode);
   setupComponent(instance);
-  setupRenderEffect(instance, container);
+  setupRenderEffect(instance, initialVNode, container);
 }
 
-function setupRenderEffect(instance: any, container: any) {
+function setupRenderEffect(instance: any, initialVNode: any, container: any) {
   const { proxy } = instance;
-  // 虚拟节点树，这里的render是组件的render函数 返回的内容是h函数返回的内容
-  // 绑定代理对象this 到组件内
+  // 从组件对象中剥离虚拟节点树
+  // 这里的render是组件的render函数 返回的内容是h函数返回的内容
+  // 使用call()绑定代理对象this 到组件内
   const subTree = instance.render.call(proxy);
   patch(subTree, container);
+
+  // mountElement 将el绑定到了subTree
+  // 再绑定到组件的el属性
+  initialVNode.el = subTree.el;
 }
