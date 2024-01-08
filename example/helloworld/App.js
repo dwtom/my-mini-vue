@@ -1,4 +1,4 @@
-import { h } from '../lib/my-mini-vue.esm.js';
+import { h } from '../../lib/my-mini-vue.esm.js';
 import { Foo } from './Foo.js';
 
 window.self = null;

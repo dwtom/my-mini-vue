@@ -1,17 +1,21 @@
 import { shallowReadonly } from '../reactivity/reactive';
 import { isObject } from '../shared';
+import { emit } from './componentEmit';
 import { initProps } from './componentProps';
 import { PublicInstanceProxyHandlers } from './componentPublicInstance';
 
 // 生成组件实例
 export function createComponentInstance(vnode) {
-  const component = {
+  const instance = {
     vnode,
     type: vnode.type,
     setupState: {},
     props: {},
+    emit: () => {},
   };
-  return component;
+  // 组件实例作为内部参数传入到emit方法，用户只传事件名称和业务参数
+  instance.emit = emit.bind(null, instance) as any;
+  return instance;
 }
 
 // 为组件实例赋予状态
@@ -33,7 +37,9 @@ function setupStatefulComponent(instance) {
 
   const { setup } = Component;
   if (setup) {
-    const setupResult = setup(shallowReadonly(instance.props));
+    const setupResult = setup(shallowReadonly(instance.props), {
+      emit: instance.emit,
+    });
     handleSetupResult(instance, setupResult);
   }
 }

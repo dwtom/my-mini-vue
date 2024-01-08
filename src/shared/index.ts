@@ -21,3 +21,17 @@ export const hasChanged = (value: any, oldValue: any) => {
 export const hasOwn = (obj: any, key: string) => {
   return Object.hasOwn(obj, key);
 };
+
+// 将 kebab-case格式的名称转为首字母大写的驼峰
+export const camelize = (str: string) => {
+  return str.replace(/-(\w)/g, (_, c) => (c ? c.toUpperCase() : ''));
+};
+
+// 事件名首字母转为大写
+const capitalize = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+// 事件名拼接上 on
+export const toHandleKey = (str: string) => {
+  return str ? 'on' + capitalize(str) : '';
+};
