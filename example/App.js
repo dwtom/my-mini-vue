@@ -6,10 +6,19 @@ export const App = {
     window.self = this;
     // ui
     // return h('div', { id: 'root' }, `hi,${this.msg}`);
-    return h('div', { id: 'root' }, [
-      h('p', { class: 'red' }, 'hi'),
-      h('p', { class: 'blue' }, ' my-vue'),
-    ]);
+    return h(
+      'div',
+      {
+        id: 'root',
+        onClick() {
+          console.log('clicked');
+        },
+        onMouseenter() {
+          console.log('mouseenter');
+        },
+      },
+      [h('p', { class: 'red' }, 'hi'), h('p', { class: 'blue' }, ' my-vue')]
+    );
   },
 
   setup() {

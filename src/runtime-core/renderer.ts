@@ -21,13 +21,21 @@ function processElement(vnode, container) {
   mountElement(vnode, container);
 }
 
+// 为dom元素绑定html属性，事件等，并将dom元素及子元素放入父节点中
 function mountElement(vnode, container) {
   // vnode对象包含type,props,children 详见createVnode
   // 将根节点绑定到当前的虚拟节点上便于后续绑定到this上调用
   const el = (vnode.el = document.createElement(vnode.type));
   // 处理props
   for (const [key, val] of Object.entries(vnode.props ?? {})) {
-    el.setAttribute(key, val);
+    const isOn = (key: string) => /^on[A-Z]/.test(key);
+    // 处理事件
+    if (isOn(key)) {
+      const eventName = key.slice(2).toLowerCase();
+      el.addEventListener(eventName, val);
+    } else {
+      el.setAttribute(key, val);
+    }
   }
   // 处理children
   mountChildren(vnode, el);
