@@ -16,3 +16,8 @@ export const isObject = (val: any) => {
 export const hasChanged = (value: any, oldValue: any) => {
   return !Object.is(value, oldValue);
 };
+
+// 判断对象是否包含某个属性
+export const hasOwn = (obj: any, key: string) => {
+  return Object.hasOwn(obj, key);
+};

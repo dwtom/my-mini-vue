@@ -7,6 +7,8 @@ describe('reactive', () => {
     expect(observed.foo).toBe(1);
     expect(isReactive(observed)).toBe(true);
     expect(isReactive(original)).toBe(false);
+    original.foo = 2;
+    expect(observed.foo).toBe(2);
   });
 
   // reactive包裹的嵌套对象应该也具有响应性

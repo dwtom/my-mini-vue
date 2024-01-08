@@ -1,4 +1,5 @@
 import { h } from '../lib/my-mini-vue.esm.js';
+import { Foo } from './Foo.js';
 
 window.self = null;
 export const App = {
@@ -13,11 +14,12 @@ export const App = {
         onClick() {
           console.log('clicked');
         },
-        onMouseenter() {
-          console.log('mouseenter');
-        },
       },
-      [h('p', { class: 'red' }, 'hi'), h('p', { class: 'blue' }, ' my-vue')]
+      [
+        h('p', { class: 'red' }, 'hi'),
+        h('p', { class: 'blue' }, ' my-vue'),
+        h(Foo, { count: 1 }),
+      ]
     );
   },
 
