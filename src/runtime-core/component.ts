@@ -3,6 +3,7 @@ import { isObject } from '../shared';
 import { emit } from './componentEmit';
 import { initProps } from './componentProps';
 import { PublicInstanceProxyHandlers } from './componentPublicInstance';
+import { initSlots } from './componentSlots';
 
 // 生成组件实例
 export function createComponentInstance(vnode) {
@@ -11,6 +12,7 @@ export function createComponentInstance(vnode) {
     type: vnode.type,
     setupState: {},
     props: {},
+    slots: {},
     emit: () => {},
   };
   // 组件实例作为内部参数传入到emit方法，用户只传事件名称和业务参数
@@ -22,7 +24,7 @@ export function createComponentInstance(vnode) {
 export function setupComponent(instance) {
   // 初始化props和slots
   initProps(instance, instance.vnode.props);
-  // initSlots()
+  initSlots(instance, instance.vnode.children);
 
   // 初始化有状态的组件
   setupStatefulComponent(instance);

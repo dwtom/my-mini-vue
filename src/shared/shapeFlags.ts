@@ -9,12 +9,15 @@ export enum ShapeFlags {
   TEXT_CHILDREN = 1 << 2, // 0100
   // 多个子节点
   ARRAY_CHILDREN = 1 << 3, // 1000
+  // 插槽
+  SLOT_CHILDREN = 1 << 4,
 }
 
 // 0-false; 1-true
 
 // 写入 按位或
 // ELEMENT | TEXT_CHILDREN => 0001 | 0100 => 0101
+// 0010 | 1000 -> 1010
 
 // 读取 按位与
 // (ELEMENT |= TEXT_CHILDREN) & TEXT_CHILDREN => 0101 & 0100 => 0100

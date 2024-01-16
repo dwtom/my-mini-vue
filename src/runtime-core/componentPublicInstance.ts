@@ -2,7 +2,8 @@ import { hasOwn } from '../shared';
 
 // 将其它值绑定到this
 const publicPropertiesMap = {
-  $el: i => i.vnode.el,
+  $el: i => i.vnode.el, // 根组件
+  $slots: i => i.slots, // 插槽
 };
 
 // 组件代理的handler
