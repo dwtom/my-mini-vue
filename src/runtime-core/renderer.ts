@@ -1,5 +1,6 @@
 import { ShapeFlags } from '../shared/shapeFlags';
 import { createComponentInstance, setupComponent } from './component';
+import { Fragment, Text } from './vnode';
 
 export function render(vnode, container) {
   patch(vnode, container);
@@ -7,14 +8,34 @@ export function render(vnode, container) {
 
 // 方便递归处理
 function patch(vnode, container) {
-  const { shapeFlag } = vnode;
-  if (shapeFlag & ShapeFlags.ELEMENT) {
-    // 处理dom元素
-    processElement(vnode, container);
-  } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-    // 处理component
-    processComponent(vnode, container);
+  const { type, shapeFlag } = vnode;
+  switch (type) {
+    case Fragment: // 只渲染children
+      processFragment(vnode, container);
+      break;
+    case Text: // 渲染文本
+      processText(vnode, container);
+      break;
+    default:
+      if (shapeFlag & ShapeFlags.ELEMENT) {
+        // 处理dom元素
+        processElement(vnode, container);
+      } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        // 处理component
+        processComponent(vnode, container);
+      }
+      break;
   }
+}
+
+function processText(vnode: any, container: any) {
+  const { children } = vnode;
+  const textNode = (vnode.el = document.createTextNode(children));
+  container.append(textNode);
+}
+
+function processFragment(vnode: any, container: any) {
+  mountChildren(vnode, container);
 }
 
 function processElement(vnode, container) {
@@ -37,24 +58,24 @@ function mountElement(vnode, container) {
       el.setAttribute(key, val);
     }
   }
-  // 处理children
-  mountChildren(vnode, el);
+
+  const { children, shapeFlag } = vnode;
+  if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    // 文本节点
+    el.textContent = children;
+  } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+    // 包含多个子节点
+    mountChildren(vnode, el);
+  }
 
   container.append(el);
 }
 
-// 生成元素的子元素
+// 处理children
 function mountChildren(vnode, container) {
-  const { children, shapeFlag } = vnode;
-  if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-    // 文本节点
-    container.textContent = children;
-  } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-    // 包含多个子节点
-    children.forEach(child => {
-      patch(child, container);
-    });
-  }
+  vnode.children.forEach(child => {
+    patch(child, container);
+  });
 }
 
 function processComponent(vnode, container) {

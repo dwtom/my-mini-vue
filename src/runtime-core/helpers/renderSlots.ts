@@ -1,11 +1,11 @@
-import { createVNode } from '../vnode';
+import { Fragment, createVNode } from '../vnode';
 
 // 渲染插槽内容(支持一个或多个节点)
 export function renderSlots(slots: any, slotName: string, props?: object) {
   const slot = slots[slotName];
   if (slot && typeof slot === 'function') {
-    return createVNode('div', {}, slot(props));
+    return createVNode(Fragment, {}, slot(props));
   } else {
-    return createVNode('div', {}, slots);
+    return createVNode(Fragment, {}, slots);
   }
 }

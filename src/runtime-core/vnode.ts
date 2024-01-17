@@ -1,6 +1,9 @@
 import { isObject } from '../shared';
 import { ShapeFlags } from '../shared/shapeFlags';
 
+export const Fragment = Symbol('Fragment');
+export const Text = Symbol('Text');
+
 // 创建虚拟节点
 // 如果type是对象，则代表节点是一个组件，props代表组件接收的props
 // 如果type是字符串，那么就代表该节点是一个dom元素
@@ -28,6 +31,11 @@ export function createVNode(type, props?, children?) {
   }
 
   return vnode;
+}
+
+// 文本节点
+export function createTextVNode(text: string) {
+  return createVNode(Text, {}, text);
 }
 
 // 为patch方法初筛节点类型
