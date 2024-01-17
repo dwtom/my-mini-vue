@@ -8,13 +8,15 @@ import { initSlots } from './componentSlots';
 let currentInstance = null;
 
 // 生成组件实例
-export function createComponentInstance(vnode) {
+export function createComponentInstance(vnode, parent) {
   const instance = {
     vnode,
     type: vnode.type,
     setupState: {},
     props: {},
     slots: {},
+    provides: parent ? parent.provides : {},
+    parent,
     emit: () => {},
   };
   // 组件实例作为内部参数传入到emit方法，用户只传事件名称和业务参数
