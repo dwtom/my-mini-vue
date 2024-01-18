@@ -3,6 +3,7 @@ import { createComponentInstance, setupComponent } from './component';
 import { Fragment, Text } from './vnode';
 import { createAppAPI } from './createApp';
 
+// 将渲染流程包装一层供不同平台自定义渲染
 export function createRenderer(options) {
   const { createElement, patchProp, insert } = options;
 

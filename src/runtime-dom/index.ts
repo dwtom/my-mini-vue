@@ -29,4 +29,5 @@ export function createApp(...arg) {
   return renderer.createApp(...arg);
 }
 
+// runtime-core是基础层，runtime-dom是应用层
 export * from '../runtime-core';

@@ -1,4 +1,3 @@
-import { hasOwn } from '../shared';
 import { getCurrentInstance } from './component';
 
 // 需在setup中才能调用
