@@ -2,49 +2,61 @@ import { ShapeFlags } from '../shared/shapeFlags';
 import { createComponentInstance, setupComponent } from './component';
 import { Fragment, Text } from './vnode';
 import { createAppAPI } from './createApp';
+import { effect } from '../reactivity/effect';
 
 // 将渲染流程包装一层供不同平台自定义渲染
 export function createRenderer(options) {
   const { createElement, patchProp, insert } = options;
 
   function render(vnode, container) {
-    patch(vnode, container, null);
+    patch(null, vnode, container, null);
   }
 
-  // 方便递归处理
-  function patch(vnode, container, parentComponent) {
-    const { type, shapeFlag } = vnode;
+  // 处理vnode 方便递归处理
+  // n1 - 旧的节点,初始化为null
+  // m2 - 新的节点
+  function patch(n1, n2, container, parentComponent) {
+    const { type, shapeFlag } = n2;
     switch (type) {
       case Fragment: // 只渲染children
-        processFragment(vnode, container, parentComponent);
+        processFragment(n1, n2, container, parentComponent);
         break;
       case Text: // 渲染文本
-        processText(vnode, container);
+        processText(n1, n2, container);
         break;
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           // 处理dom元素
-          processElement(vnode, container, parentComponent);
+          processElement(n1, n2, container, parentComponent);
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
           // 处理component
-          processComponent(vnode, container, parentComponent);
+          processComponent(n1, n2, container, parentComponent);
         }
         break;
     }
   }
 
-  function processText(vnode: any, container: any) {
-    const { children } = vnode;
-    const textNode = (vnode.el = document.createTextNode(children));
+  function processText(n1, n2: any, container: any) {
+    const { children } = n2;
+    const textNode = (n2.el = document.createTextNode(children));
     container.append(textNode);
   }
 
-  function processFragment(vnode: any, container: any, parentComponent) {
-    mountChildren(vnode, container, parentComponent);
+  function processFragment(n1, n2: any, container: any, parentComponent) {
+    mountChildren(n2, container, parentComponent);
   }
 
-  function processElement(vnode, container, parentComponent) {
-    mountElement(vnode, container, parentComponent);
+  function processElement(n1, n2, container, parentComponent) {
+    if (!n1) {
+      mountElement(n2, container, parentComponent);
+    } else {
+      patchElement(n1, n2, container, parentComponent);
+    }
+  }
+
+  // 节点更新
+  function patchElement(n1, n2, container, parentComponent) {
+    console.log('patchElement');
   }
 
   // 为dom元素绑定html属性，事件等，并将dom元素及子元素放入父节点中
@@ -73,12 +85,12 @@ export function createRenderer(options) {
   // 处理children
   function mountChildren(vnode, container, parentComponent) {
     vnode.children.forEach(child => {
-      patch(child, container, parentComponent);
+      patch(null, child, container, parentComponent);
     });
   }
 
-  function processComponent(vnode, container, parentComponent) {
-    mountComponent(vnode, container, parentComponent);
+  function processComponent(n1, n2, container, parentComponent) {
+    mountComponent(n2, container, parentComponent);
   }
 
   function mountComponent(initialVNode, container, parentComponent) {
@@ -89,16 +101,30 @@ export function createRenderer(options) {
   }
 
   function setupRenderEffect(instance: any, initialVNode: any, container: any) {
-    const { proxy } = instance;
-    // 从组件对象中剥离虚拟节点树
-    // 这里的render是组件的render函数 返回的内容是h函数返回的内容
-    // 使用call()绑定代理对象this 到组件内
-    const subTree = instance.render.call(proxy);
-    patch(subTree, container, instance);
+    effect(() => {
+      const { proxy } = instance;
+      if (!instance.isMounted) {
+        // 从组件对象中剥离虚拟节点树
+        // 这里的render是组件的render函数 返回的内容是h函数返回的内容
+        // 使用call()绑定代理对象this 到组件内
+        // 将subtree保存起来便于更新节点时比较
+        const subTree = (instance.subTree = instance.render.call(proxy));
+        patch(null, subTree, container, instance);
 
-    // mountElement 将el绑定到了subTree
-    // 再绑定到组件的el属性
-    initialVNode.el = subTree.el;
+        // mountElement 将el绑定到了subTree
+        // 再绑定到组件的el属性
+        initialVNode.el = subTree.el;
+
+        instance.isMounted = true;
+      } else {
+        const subTree = instance.render.call(proxy);
+        const prevSubTree = instance.subTree;
+
+        // 节点更新subTree属性也要更新
+        instance.subTree = subTree;
+        patch(prevSubTree, subTree, container, instance);
+      }
+    });
   }
 
   return {
