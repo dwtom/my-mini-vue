@@ -97,8 +97,35 @@ export function createRenderer(options) {
       if (prevShapFlag & ShapeFlags.TEXT_CHILDREN) {
         hostSetElementText(container, '');
         mountChildren(c2, container, parentComponent);
+      } else {
+        // array diff array
+        patchKeyedChildren(c1, c2, container, parentComponent);
       }
     }
+  }
+
+  // 对比算法
+  function patchKeyedChildren(c1, c2, container, parentComponent) {
+    let i = 0; // 指针
+    let e1 = c1.length - 1; // 老的最后一个索引
+    let e2 = c2.length - 1; // 新的最后一个索引
+
+    // 比较两个节点是否一致
+    function isSomeVNodeType(n1, n2) {
+      return n1.type === n2.type && n1.key === n2.key;
+    }
+
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i];
+      const n2 = c2[i];
+      if (isSomeVNodeType(n1, n2)) {
+        patch(n1, n2, container, parentComponent);
+      } else {
+        break;
+      }
+      i++;
+    }
+    console.log(i);
   }
 
   // 删除节点
