@@ -11,6 +11,8 @@ export function createRenderer(options) {
     createElement: hostCreateElement,
     patchProp: hostPatchProp,
     insert: hostInsert,
+    remove: hostRemove,
+    setElementText: hostSetElementText,
   } = options;
 
   function render(vnode, container) {
@@ -48,7 +50,7 @@ export function createRenderer(options) {
   }
 
   function processFragment(n1, n2: any, container: any, parentComponent) {
-    mountChildren(n2, container, parentComponent);
+    mountChildren(n2.children, container, parentComponent);
   }
 
   function processElement(n1, n2, container, parentComponent) {
@@ -66,12 +68,51 @@ export function createRenderer(options) {
     const newProps = n2.props || EMPTY_OBJ;
 
     const el = (n2.el = n1.el);
+    // 更新children
+    patchChildren(n1, n2, el, parentComponent);
     // 处理节点的props更新
     patchProps(el, oldProps, newProps);
   }
 
-  // 处理节点的props更新
+  // 更新children
+  function patchChildren(n1, n2, container, parentComponent) {
+    const prevShapFlag = n1.shapeFlag;
+    const { shapeFlag } = n2;
+    const c1 = n1.children;
+    const c2 = n2.children;
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      // arraychildren->textchildren
+      if (prevShapFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // 删除老的children
+        unmountChildren(n1.children);
+      }
+      if (c1 !== c2) {
+        // 渲染文本节点
+        // text -> text 也走到这里
+        hostSetElementText(container, c2);
+      }
+    } else {
+      // 新节点是数组节点
+      // text -> array
+      if (prevShapFlag & ShapeFlags.TEXT_CHILDREN) {
+        hostSetElementText(container, '');
+        mountChildren(c2, container, parentComponent);
+      }
+    }
+  }
+
+  // 删除节点
+  function unmountChildren(children) {
+    for (let i = 0; i < children.length; i++) {
+      const el = children[i].el;
+      hostRemove(el);
+    }
+  }
+
+  // 更新节点的props
   function patchProps(el, oldProps, newProps) {
+    // https://github.com/vuejs/core/pull/5857
+    // vue3会在编译阶段对静态props进行提升，最终此处比较的会是同一个对象的引用
     if (oldProps !== newProps) {
       for (const key in newProps) {
         const prevProp = oldProps[key];
@@ -107,7 +148,7 @@ export function createRenderer(options) {
       el.textContent = children;
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       // 包含多个子节点
-      mountChildren(vnode, el, parentComponent);
+      mountChildren(vnode.children, el, parentComponent);
     }
 
     // container.append(el);
@@ -115,8 +156,8 @@ export function createRenderer(options) {
   }
 
   // 处理children
-  function mountChildren(vnode, container, parentComponent) {
-    vnode.children.forEach(child => {
+  function mountChildren(children, container, parentComponent) {
+    children.forEach(child => {
       patch(null, child, container, parentComponent);
     });
   }
