@@ -6,6 +6,8 @@
  * @LastEditTime: 2024-01-03 11:20:19
  * @FilePath: \my-mini-vue\src\shared\index.ts
  */
+export const EMPTY_OBJ = {};
+
 export const extend = Object.assign;
 
 export const isObject = (val: any) => {

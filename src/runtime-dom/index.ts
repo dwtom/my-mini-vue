@@ -4,14 +4,17 @@ function createElement(type) {
   return document.createElement(type);
 }
 
-function patchProp(el, key, val) {
+function patchProp(el, key, prevVal, nextVal) {
   const isOn = (key: string) => /^on[A-Z]/.test(key);
   // 处理事件
   if (isOn(key)) {
     const eventName = key.slice(2).toLowerCase();
-    el.addEventListener(eventName, val);
+    el.addEventListener(eventName, nextVal);
+  } else if ([null, undefined].includes(nextVal)) {
+    // 如果属性值不存在，那么从节点上删除该属性
+    el.removeAttribute(key);
   } else {
-    el.setAttribute(key, val);
+    el.setAttribute(key, nextVal);
   }
 }
 

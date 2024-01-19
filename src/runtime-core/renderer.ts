@@ -3,10 +3,15 @@ import { createComponentInstance, setupComponent } from './component';
 import { Fragment, Text } from './vnode';
 import { createAppAPI } from './createApp';
 import { effect } from '../reactivity/effect';
+import { EMPTY_OBJ } from '../shared';
 
 // 将渲染流程包装一层供不同平台自定义渲染
 export function createRenderer(options) {
-  const { createElement, patchProp, insert } = options;
+  const {
+    createElement: hostCreateElement,
+    patchProp: hostPatchProp,
+    insert: hostInsert,
+  } = options;
 
   function render(vnode, container) {
     patch(null, vnode, container, null);
@@ -14,7 +19,7 @@ export function createRenderer(options) {
 
   // 处理vnode 方便递归处理
   // n1 - 旧的节点,初始化为null
-  // m2 - 新的节点
+  // n2 - 新的节点
   function patch(n1, n2, container, parentComponent) {
     const { type, shapeFlag } = n2;
     switch (type) {
@@ -56,17 +61,44 @@ export function createRenderer(options) {
 
   // 节点更新
   function patchElement(n1, n2, container, parentComponent) {
-    console.log('patchElement');
+    // console.log('patchElement');
+    const oldProps = n1.props || EMPTY_OBJ;
+    const newProps = n2.props || EMPTY_OBJ;
+
+    const el = (n2.el = n1.el);
+    // 处理节点的props更新
+    patchProps(el, oldProps, newProps);
+  }
+
+  // 处理节点的props更新
+  function patchProps(el, oldProps, newProps) {
+    if (oldProps !== newProps) {
+      for (const key in newProps) {
+        const prevProp = oldProps[key];
+        const nextProp = newProps[key];
+        if (prevProp !== nextProp) {
+          hostPatchProp(el, key, prevProp, nextProp);
+        }
+      }
+      if (oldProps !== EMPTY_OBJ) {
+        for (const key in oldProps) {
+          // 处理属性被删除的情况
+          if (!(key in newProps)) {
+            hostPatchProp(el, key, oldProps[key], null);
+          }
+        }
+      }
+    }
   }
 
   // 为dom元素绑定html属性，事件等，并将dom元素及子元素放入父节点中
   function mountElement(vnode, container, parentComponent) {
     // vnode对象包含type,props,children 详见createVnode
     // 将根节点绑定到当前的虚拟节点上便于后续绑定到this上调用
-    const el = (vnode.el = createElement(vnode.type));
+    const el = (vnode.el = hostCreateElement(vnode.type));
     // 处理props
     for (const [key, val] of Object.entries(vnode.props ?? {})) {
-      patchProp(el, key, val);
+      hostPatchProp(el, key, null, val);
     }
 
     const { children, shapeFlag } = vnode;
@@ -79,7 +111,7 @@ export function createRenderer(options) {
     }
 
     // container.append(el);
-    insert(el, container);
+    hostInsert(el, container);
   }
 
   // 处理children
