@@ -115,6 +115,7 @@ export function createRenderer(options) {
       return n1.type === n2.type && n1.key === n2.key;
     }
 
+    // 从左侧开始对比
     while (i <= e1 && i <= e2) {
       const n1 = c1[i];
       const n2 = c2[i];
@@ -125,7 +126,19 @@ export function createRenderer(options) {
       }
       i++;
     }
-    console.log(i);
+
+    // 从右侧开始对比(从右侧左移)
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1];
+      const n2 = c2[e2];
+      if (isSomeVNodeType(n1, n2)) {
+        patch(n1, n2, container, parentComponent);
+      } else {
+        break;
+      }
+      e1--;
+      e2--;
+    }
   }
 
   // 删除节点
