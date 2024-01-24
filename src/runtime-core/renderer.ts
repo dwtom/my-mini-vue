@@ -5,6 +5,7 @@ import { createAppAPI } from './createApp';
 import { effect } from '../reactivity/effect';
 import { EMPTY_OBJ } from '../shared';
 import { shouldUpdateComponent } from './componentUpdateUtils';
+import { queueJobs } from './scheduler';
 
 // 将渲染流程包装一层供不同平台自定义渲染
 export function createRenderer(options) {
@@ -358,36 +359,45 @@ export function createRenderer(options) {
     container: any,
     anchor
   ) {
-    instance.update = effect(() => {
-      const { proxy } = instance;
-      if (!instance.isMounted) {
-        // 从组件对象中剥离虚拟节点树
-        // 这里的render是组件的render函数 返回的内容是h函数返回的内容
-        // 使用call()绑定代理对象this 到组件内
-        // 将subtree保存起来便于更新节点时比较
-        const subTree = (instance.subTree = instance.render.call(proxy));
-        patch(null, subTree, container, instance, anchor);
+    instance.update = effect(
+      () => {
+        const { proxy } = instance;
+        if (!instance.isMounted) {
+          // 从组件对象中剥离虚拟节点树
+          // 这里的render是组件的render函数 返回的内容是h函数返回的内容
+          // 使用call()绑定代理对象this 到组件内
+          // 将subtree保存起来便于更新节点时比较
+          const subTree = (instance.subTree = instance.render.call(proxy));
+          patch(null, subTree, container, instance, anchor);
 
-        // mountElement 将el绑定到了subTree
-        // 再绑定到组件的el属性
-        initialVNode.el = subTree.el;
+          // mountElement 将el绑定到了subTree
+          // 再绑定到组件的el属性
+          initialVNode.el = subTree.el;
 
-        instance.isMounted = true;
-      } else {
-        const { vnode, next } = instance;
-        // 更新组件的props
-        if (next) {
-          next.el = vnode.el;
-          updateComponentPreRender(instance, next);
+          instance.isMounted = true;
+        } else {
+          const { vnode, next } = instance;
+          // 更新组件的props
+          if (next) {
+            next.el = vnode.el;
+            updateComponentPreRender(instance, next);
+          }
+          const subTree = instance.render.call(proxy);
+          const prevSubTree = instance.subTree;
+
+          // 节点更新subTree属性也要更新
+          instance.subTree = subTree;
+          patch(prevSubTree, subTree, container, instance, anchor);
         }
-        const subTree = instance.render.call(proxy);
-        const prevSubTree = instance.subTree;
-
-        // 节点更新subTree属性也要更新
-        instance.subTree = subTree;
-        patch(prevSubTree, subTree, container, instance, anchor);
+      },
+      {
+        // 利用effect的scheduler 使响应式数据更新完成后再执行视图更新
+        scheduler() {
+          // 将更新任务推入微队列中等待同步任务完成后执行
+          queueJobs(instance.update);
+        },
       }
-    });
+    );
   }
 
   return {
