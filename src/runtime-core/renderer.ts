@@ -4,6 +4,7 @@ import { Fragment, Text } from './vnode';
 import { createAppAPI } from './createApp';
 import { effect } from '../reactivity/effect';
 import { EMPTY_OBJ } from '../shared';
+import { shouldUpdateComponent } from './componentUpdateUtils';
 
 // 将渲染流程包装一层供不同平台自定义渲染
 export function createRenderer(options) {
@@ -320,12 +321,33 @@ export function createRenderer(options) {
   }
 
   function processComponent(n1, n2, container, parentComponent, anchor) {
-    mountComponent(n2, container, parentComponent, anchor);
+    if (!n1) {
+      // 没有原始的则新建
+      mountComponent(n2, container, parentComponent, anchor);
+    } else {
+      updateComponent(n1, n2);
+    }
+  }
+
+  // 更新组件
+  function updateComponent(n1, n2) {
+    const instance = (n2.component = n1.component);
+    if (shouldUpdateComponent(n1, n2)) {
+      instance.next = n2;
+      instance.update();
+    } else {
+      // 不需要更新的时候，新的节点直接赋老的值
+      n2.el = n1.el;
+      instance.vnode = n2;
+    }
   }
 
   function mountComponent(initialVNode, container, parentComponent, anchor) {
     // 创建组件实例
-    const instance = createComponentInstance(initialVNode, parentComponent);
+    const instance = (initialVNode.component = createComponentInstance(
+      initialVNode,
+      parentComponent
+    ));
     setupComponent(instance);
     setupRenderEffect(instance, initialVNode, container, anchor);
   }
@@ -336,7 +358,7 @@ export function createRenderer(options) {
     container: any,
     anchor
   ) {
-    effect(() => {
+    instance.update = effect(() => {
       const { proxy } = instance;
       if (!instance.isMounted) {
         // 从组件对象中剥离虚拟节点树
@@ -352,6 +374,12 @@ export function createRenderer(options) {
 
         instance.isMounted = true;
       } else {
+        const { vnode, next } = instance;
+        // 更新组件的props
+        if (next) {
+          next.el = vnode.el;
+          updateComponentPreRender(instance, next);
+        }
         const subTree = instance.render.call(proxy);
         const prevSubTree = instance.subTree;
 
@@ -365,6 +393,12 @@ export function createRenderer(options) {
   return {
     createApp: createAppAPI(render),
   };
+}
+
+function updateComponentPreRender(instance, nextVNode) {
+  instance.vnode = nextVNode;
+  instance.next = null;
+  instance.props = nextVNode.props;
 }
 
 // 获取最长递增子序列(索引)

@@ -13,6 +13,7 @@ export function createComponentInstance(vnode, parent) {
   const instance = {
     vnode,
     type: vnode.type,
+    next: null, // 指向下一次要更新的虚拟节点
     setupState: {},
     props: {},
     slots: {},
