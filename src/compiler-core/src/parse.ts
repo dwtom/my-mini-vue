@@ -24,8 +24,32 @@ function parseChildren(context) {
       node = parseElement(context);
     }
   }
+
+  // 如果没有命中插值和标签则认为是text类型
+  if (!node) {
+    node = parseText(context);
+  }
+
   nodes.push(node);
   return nodes;
+}
+
+// 解析text类型
+function parseText(context) {
+  const content = parseTextData(context, context.source.length);
+
+  return {
+    type: NodeTypes.TEXT,
+    content,
+  };
+}
+
+// 解析最内部的文本
+function parseTextData(context, length) {
+  const content = context.source.slice(0, length);
+
+  advanceBy(context, length); // 解析流程向前推进
+  return content;
 }
 
 // 解析element类型
@@ -75,10 +99,10 @@ function parseInterpolation(context) {
 
   advanceBy(context, openDelimiter.length); // 去掉前两个括号
   const rawContentLength = closeIndex - openDelimiter.length; // 获取插值内容的长度
-  const rawContent = context.source.slice(0, rawContentLength); // 获取插值内容
+  const rawContent = parseTextData(context, rawContentLength); // 获取插值内容，并推进解析
   const content = rawContent.trim(); // 去除空格
 
-  advanceBy(context, rawContentLength + closeDelimiter.length); // 删除当前插值内容,解析下一个内容
+  advanceBy(context, closeDelimiter.length); // 删除}},解析下一个内容
   return {
     type: NodeTypes.INTERPOLATION,
     content: {
