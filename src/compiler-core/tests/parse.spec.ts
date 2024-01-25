@@ -17,4 +17,15 @@ describe('Parse', () => {
       });
     });
   });
+
+  describe('element', () => {
+    it('simple element div', () => {
+      const ast = baseParse('<input />');
+
+      expect(ast.children[0]).toStrictEqual({
+        type: NodeTypes.ELEMENT,
+        tag: 'input',
+      });
+    });
+  });
 });
