@@ -7,37 +7,69 @@ enum TagType {
 
 export function baseParse(content: string) {
   const context = createParserContext(content);
-  return createRoot(parseChildren(context));
+  return createRoot(parseChildren(context, []));
 }
 
 // 生成各个子节点
-function parseChildren(context) {
+function parseChildren(context, ancestors) {
   const nodes: any[] = [];
-  let node;
+  while (!isEnd(context, ancestors)) {
+    let node;
+    const s = context.source;
+    if (s.startsWith('{{')) {
+      // 解析插值
+      node = parseInterpolation(context);
+    } else if (s[0] === '<') {
+      // 解析element
+      if (/[a-z]/i.test(s[1])) {
+        node = parseElement(context, ancestors);
+      }
+    }
+
+    // 如果没有命中插值和标签则认为是text类型
+    if (!node) {
+      node = parseText(context);
+    }
+    nodes.push(node);
+  }
+
+  return nodes;
+}
+
+// 停止循环解析children内部内容
+function isEnd(context, ancestors) {
   const s = context.source;
-  if (s.startsWith('{{')) {
-    // 解析插值
-    node = parseInterpolation(context);
-  } else if (s[0] === '<') {
-    // 解析element
-    if (/[a-z]/i.test(s[1])) {
-      node = parseElement(context);
+  // 遇见结束标签
+  if (s.startsWith('</')) {
+    // 与历史值依次比较，避免有未填写结束标签的情况
+    for (let i = ancestors.length - 1; i >= 0; i--) {
+      const tag = ancestors[i].tag;
+      if (startsWidthEndTagOpen(s, tag)) {
+        return true;
+      }
     }
   }
-
-  // 如果没有命中插值和标签则认为是text类型
-  if (!node) {
-    node = parseText(context);
-  }
-
-  nodes.push(node);
-  return nodes;
+  // source没有值
+  return !s;
 }
 
 // 解析text类型
 function parseText(context) {
-  const content = parseTextData(context, context.source.length);
+  // 遇到插值类型则停止解析
+  let endIndex = context.source.length; // text类型的结束点
+  let endTokens = ['{{', '<'];
 
+  for (let i = 0; i < endTokens.length; i++) {
+    let index = context.source.indexOf(endTokens[i]);
+    // 指针停在text后离text最近的地方
+    if (index !== -1 && endIndex > index) {
+      endIndex = index;
+    }
+  }
+
+  const content = parseTextData(context, endIndex);
+
+  // console.log('----------', content);
   return {
     type: NodeTypes.TEXT,
     content,
@@ -53,12 +85,28 @@ function parseTextData(context, length) {
 }
 
 // 解析element类型
-function parseElement(context) {
+function parseElement(context, ancestors) {
   // 解析正常的tag 如<div></div>
-  const element = parseTag(context, TagType.Start);
+  const element: any = parseTag(context, TagType.Start);
+  ancestors.push(element); // 收集解析过的element
+  // 生成element内部的children 递归处理
+  element.children = parseChildren(context, ancestors);
 
-  parseTag(context, TagType.End); // 解析尾标签并删除
+  ancestors.pop(); // 处理完后删除element
+
+  if (startsWidthEndTagOpen(context.source, element.tag)) {
+    parseTag(context, TagType.End); // 解析尾标签并删除
+  } else {
+    throw new Error(`缺少结束标签:${element.tag}`);
+  }
   return element;
+}
+
+function startsWidthEndTagOpen(source, tag) {
+  return (
+    source.startsWith('</') &&
+    source.slice(2, 2 + tag.length).toLowerCase() === tag
+  );
 }
 
 // 解析tag
@@ -93,7 +141,7 @@ function parseInterpolation(context) {
   // 找到插值结尾的括号的索引
   // 从第二位开始查找,前两个括号不需要
   const closeIndex = context.source.indexOf(
-    openDelimiter,
+    closeDelimiter,
     openDelimiter.length
   );
 
