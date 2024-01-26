@@ -1,7 +1,13 @@
 // 通过外部传入的options实现节点信息修改,提高灵活性与可测试性
-export function transform(root, options) {
+export function transform(root, options = {}) {
   const context = createTransformContext(root, options);
   traversNode(root, context);
+  createRootCodegen(root);
+}
+
+// 抽离代码转义逻辑
+function createRootCodegen(root: any) {
+  root.codegenNode = root.children[0];
 }
 
 // 保存上下文对象
