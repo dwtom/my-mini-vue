@@ -1,5 +1,10 @@
+import { isString } from '../../shared';
 import { NodeTypes } from './ast';
-import { TO_DISPLAY_STRING, helperMapName } from './runtimeHelpers';
+import {
+  CREATE_ELEMENT_VNODE,
+  TO_DISPLAY_STRING,
+  helperMapName,
+} from './runtimeHelpers';
 
 // https://template-explorer.vuejs.org/#eyJzcmMiOiJoaSIsInNzciI6ZmFsc2UsIm9wdGlvbnMiOnsiaG9pc3RTdGF0aWMiOnRydWV9fQ==
 
@@ -65,9 +70,57 @@ function genNode(node: any, context: any) {
     case NodeTypes.SIMPLE_EXPRESSION:
       genExpression(node, context);
       break;
+    case NodeTypes.ELEMENT:
+      genElement(node, context);
+      break;
+
+    case NodeTypes.COMPOUND_EXPRESSION:
+      genCompoundExpression(node, context);
+      break;
     default:
       break;
   }
+}
+
+function genCompoundExpression(node: any, context: any) {
+  const children = node.children;
+  const { push } = context;
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    if (isString(child)) {
+      push(child);
+    } else {
+      genNode(child, context);
+    }
+  }
+}
+
+function genElement(node: any, context: any) {
+  const { push, helper } = context;
+  const { tag, children, props } = node;
+  push(`${helper(CREATE_ELEMENT_VNODE)}(`);
+  genNodeList(genNullable([tag, props, children]), context);
+  push(')');
+}
+
+function genNodeList(nodes, context) {
+  const { push } = context;
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    if (isString(node)) {
+      push(node);
+    } else {
+      genNode(node, context);
+    }
+    if (i < nodes.length - 1) {
+      push(', ');
+    }
+  }
+}
+
+// 将假值返回null
+function genNullable(args) {
+  return args.map(arg => arg || 'null');
 }
 
 function genText(node, context) {

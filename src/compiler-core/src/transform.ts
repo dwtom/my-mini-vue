@@ -13,8 +13,14 @@ export function transform(root, options = {}) {
 }
 
 // 抽离代码转义逻辑
+// 创建根节点codegen
 function createRootCodegen(root: any) {
-  root.codegenNode = root.children[0];
+  const child = root.children[0];
+  if (child.type === NodeTypes.ELEMENT) {
+    root.codegenNode = child.codegenNode;
+  } else {
+    root.codegenNode = child;
+  }
 }
 
 // 保存上下文对象
@@ -32,10 +38,14 @@ function createTransformContext(root, options) {
 
 function traversNode(node: any, context: any) {
   const nodeTransforms = context.nodeTransforms;
+  const exitFns: any[] = [];
   for (let i = 0; i < nodeTransforms.length; i++) {
     // 获取到nodeTransforms传入的方法并直接调用
     const nodeTransform = nodeTransforms[i];
-    nodeTransform(node);
+    const onExit = nodeTransform(node, context); // 没有返回值的相当于直接执行了节点的transform
+    if (onExit) {
+      exitFns.push(onExit);
+    }
   }
 
   switch (node.type) {
@@ -48,6 +58,11 @@ function traversNode(node: any, context: any) {
 
     default:
       break;
+  }
+  // 颠倒特殊节点的transform执行顺序
+  let i = exitFns.length;
+  while (i--) {
+    exitFns[i]();
   }
 }
 

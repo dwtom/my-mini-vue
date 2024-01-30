@@ -14,6 +14,8 @@ export const isObject = (val: any) => {
   return val !== null && typeof val === 'object';
 };
 
+export const isString = value => typeof value === 'string';
+
 // 两个值对比是否有变化
 export const hasChanged = (value: any, oldValue: any) => {
   return !Object.is(value, oldValue);
