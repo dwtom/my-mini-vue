@@ -367,7 +367,10 @@ export function createRenderer(options) {
           // 这里的render是组件的render函数 返回的内容是h函数返回的内容
           // 使用call()绑定代理对象this 到组件内
           // 将subtree保存起来便于更新节点时比较
-          const subTree = (instance.subTree = instance.render.call(proxy));
+          const subTree = (instance.subTree = instance.render.call(
+            proxy,
+            proxy
+          ));
           patch(null, subTree, container, instance, anchor);
 
           // mountElement 将el绑定到了subTree
@@ -382,7 +385,7 @@ export function createRenderer(options) {
             next.el = vnode.el;
             updateComponentPreRender(instance, next);
           }
-          const subTree = instance.render.call(proxy);
+          const subTree = instance.render.call(proxy, proxy);
           const prevSubTree = instance.subTree;
 
           // 节点更新subTree属性也要更新

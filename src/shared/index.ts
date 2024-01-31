@@ -3,9 +3,11 @@
  * @Author: Dong Wei
  * @Date: 2024-01-02 14:30:34
  * @LastEditors: Dong Wei
- * @LastEditTime: 2024-01-03 11:20:19
+ * @LastEditTime: 2024-01-31 14:46:52
  * @FilePath: \my-mini-vue\src\shared\index.ts
  */
+export * from './toDisplayString';
+
 export const EMPTY_OBJ = {};
 
 export const extend = Object.assign;
