@@ -1,5 +1,7 @@
 import { reactive } from '../src/reactive';
 import { effect, stop } from '../src/effect';
+import { vi } from 'vitest';
+
 describe('effect', () => {
   it('happy path', () => {
     const user = reactive({
@@ -36,7 +38,7 @@ describe('effect', () => {
   it('scheduler', () => {
     let dummy;
     let run: any;
-    const scheduler = jest.fn(() => {
+    const scheduler = vi.fn(() => {
       run = runner;
     });
     const obj = reactive({ foo: 1 });
@@ -80,7 +82,7 @@ describe('effect', () => {
   // 调用stop之后会执行onStop回调
   it('onStop', () => {
     const obj = reactive({ foo: 1 });
-    const onStop = jest.fn();
+    const onStop = vi.fn();
     let dummy;
     const runner = effect(
       () => {

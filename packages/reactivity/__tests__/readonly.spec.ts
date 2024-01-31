@@ -1,4 +1,5 @@
 import { isProxy, isReadonly, readonly } from '../src/reactive';
+import { vi } from 'vitest';
 
 describe('readonly', () => {
   it('nested values should also readonly', () => {
@@ -17,7 +18,7 @@ describe('readonly', () => {
   });
 
   it('should call console.warn when set', () => {
-    console.warn = jest.fn();
+    console.warn = vi.fn();
     const user = readonly({
       age: 10,
     });
