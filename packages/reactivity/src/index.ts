@@ -7,4 +7,4 @@ export {
   isReadonly,
   isProxy,
 } from './reactive';
-export { effect, stop } from './effect';
+export { effect, stop, ReactiveEffect } from './effect';

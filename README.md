@@ -18,4 +18,4 @@ shared - 公共方法
 
 vue - 项目总入口
 
-页面调试的事例放在packages/vue/examples目录下。
+页面调试的示例放在packages/vue/examples目录下。
