@@ -13,6 +13,7 @@ export class ReactiveEffect {
     this._fn = fn;
     this.scheduler = scheduler;
   }
+  // 执行传入的fn
   run() {
     if (!this.active) {
       this.active = true; // 避免再次调用stop方法失效
