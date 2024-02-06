@@ -16,7 +16,7 @@
 targetMap--全局的Map对象
 depsMap--中间层Map对象
 target，key--响应式对象和其属性 proxy.get
-effects--effect收集的依赖 (方法),为确保不重复，使用Set结构
+effects-- effect收集的依赖(ReactiveEffect的实例),为确保不重复，使用Set结构
 
 targetMap: [[target, depsMap]]
 depsMap: [[key, effects]]
